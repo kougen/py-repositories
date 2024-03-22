@@ -6,3 +6,7 @@ build/
 *.egg/
 *.pyc
 .idea/
+
+scripts/data/*.json
+!scripts/data/test.json
+
