@@ -4,7 +4,7 @@ class DataSource:
     def __init__(self):
         self.tables = [] #type: list[DataTable]
 
-    def add_table(self, table):
+    def add_table(self, table: DataTable):
         if table not in self.tables:
             self.tables.append(table)
 
@@ -19,28 +19,28 @@ class DataSource:
 
         return None
 
-    def get_all(self, table_name):
+    def get_all(self, table_name: str):
         table = self.get_table(table_name)
         if table:
             return table.get_all()
         else:
             return None
 
-    def get_by_id(self, table_name, id):
+    def get_by_id(self, table_name: str, id):
         table = self.get_table(table_name)
         if table:
             return table.get_by_id(id)
         else:
             return None
 
-    def get_by_filter(self, table_name, filter):
+    def get_by_filter(self, table_name: str, filter: dict):
         table = self.get_table(table_name)
         if table:
             return table.get_by_filter(filter)
         else:
             return None
 
-    def insert(self, table_name, data):
+    def insert(self, table_name: str, data):
         table = self.get_table(table_name)
         if table:
             return table.insert(data)

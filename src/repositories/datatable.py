@@ -1,4 +1,5 @@
 from .lib import FilterField
+from typing import Any
 
 class DataTable:
     def __init__(self, name):
@@ -25,23 +26,29 @@ class DataTable:
             formatted.update(field.serialize())
         return formatted
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self.name
 
-    def get_all(self):
-        pass
+    def get_all(self) -> list:
+        print("Override this method in child class")
+        return []
 
-    def get_by_id(self, id):
-        pass
+    def get_by_id(self, id) -> Any | None:
+        print("Override this method in child class")
+        return None
 
-    def get_by_filter(self, filter: dict):
-        pass
+    def get_by_filter(self, filter: dict) -> list:
+        print("Override this method in child class")
+        return []
 
-    def insert(self, data):
-        pass
+    def insert(self, data) -> bool:
+        print("Override this method in child class")
+        return False
 
-    def update(self, id, data):
-        pass
+    def update(self, id, data) -> bool:
+        print("Override this method in child class")
+        return False
 
-    def delete(self, id):
-        pass
+    def delete(self, id) -> bool:
+        print("Override this method in child class")
+        return False
