@@ -1,0 +1,31 @@
+[project]
+name = "repositories"
+version = "1.0.0"
+authors = [
+  { name="kougen", email="info@kou-gen.net" },
+]
+
+maintainers = [
+  { name="Joshua Hegedus", email="josh.hegedus@outlook.com" },
+]
+
+description = "A simple way to interact with a database using the SOLID principles' Repository pattern."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+  "jsonservice",
+]
+
+[project.urls]
+Homepage = "https://github.com/kougen/py-repositories"
+Issues = "https://github.com/kougen/py-repositories/issues"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
