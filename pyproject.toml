@@ -1,6 +1,6 @@
 [project]
 name = "pyrepositories"
-version = "1.0.0"
+version = "1.0.1"
 authors = [
   { name="kougen", email="info@kou-gen.net" },
 ]
