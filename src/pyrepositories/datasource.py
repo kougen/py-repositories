@@ -26,8 +26,8 @@ def get_id(id_type: IdTypes, data: list[Entity]):
 
 class DataSource:
     def __init__(self, auto_increment=True, id_type: IdTypes = IdTypes.INT):
-        if id_type not in [int, str]:
-            raise ValueError("id_type must be either int or str")
+        if id_type not in IdTypes:
+            raise ValueError("Invalid id_type")
 
         self.id_type = id_type
         self.tables = [] #type: list[DataTable]
