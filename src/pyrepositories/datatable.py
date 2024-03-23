@@ -1,4 +1,4 @@
-from .lib import Entity, FilterField
+from .lib import Entity, FilterField, filter_by_fields
 from typing import Any
 
 class DataTable:
@@ -38,8 +38,8 @@ class DataTable:
         return None
 
     def get_by_filter(self, filter: dict) -> list:
-        print("Override this method in child class")
-        return []
+        entities = self.get_all()
+        return filter_by_fields(entities, filter)
 
     def insert(self, data: Entity) -> bool:
         print("Override this method in child class")

@@ -38,13 +38,6 @@ class JsonTable(DataTable):
                 return item
         return None
 
-    def get_by_filter(self, filter: dict):
-        content = self.json_service.read('content') or []
-        entities = []
-        for item in content:
-            entities.append(convert_to_entity(item))
-        return filter_by_fields(entities, filter)
-
     def insert(self, data: Entity):
         content = self.json_service.read('content') or []
         content.append(data.serialize())

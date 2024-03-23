@@ -19,11 +19,15 @@ class Entity:
     def get_field(self, name: str) -> Any:
         return self.fields.get(name)
 
-    def filter(self, filter: dict) -> bool:
+    def has_value(self, filter: dict) -> bool:
         for key, value in filter.items():
-            if self.get_field(key) != value and (value is not None or value != ""):
-                return False
-        return True
+            if value is None or value != "":
+                continue
+            if key not in self.fields:
+                continue
+            if value in self.fields[key]:
+                return True
+        return False
 
     def serialize(self) -> dict[str, Any]:
         return {
@@ -49,6 +53,6 @@ class FilterField:
 def filter_by_fields(data: list[Entity], filter: dict) -> list[Entity]:
     result = []
     for item in data:
-        if item.filter(filter):
+        if item.has_value(filter):
             result.append(item)
     return result
