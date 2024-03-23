@@ -1,7 +1,8 @@
 from .datatable import DataTable
-from .lib import Entity
+from .lib import Entity, IdTypes
 import random
 import string
+from uuid import uuid4 as get_uuid
 
 
 def get_random_string_id():
@@ -12,15 +13,19 @@ def get_sequential_id(data):
     return len(data) + 1
 
 
-def get_id(id_type, data):
-    if id_type == int:
+def get_id(id_type: IdTypes, data: list[Entity]):
+    if id_type == IdTypes.INT:
         return get_sequential_id(data)
-    else:
+    elif id_type == IdTypes.STR:
         return get_random_string_id()
+    elif id_type == IdTypes.UUID:
+        return str(get_uuid())
+    else:
+        raise ValueError("Invalid id_type")
 
 
 class DataSource:
-    def __init__(self, auto_increment=True, id_type=int):
+    def __init__(self, auto_increment=True, id_type: IdTypes = IdTypes.INT):
         if id_type not in [int, str]:
             raise ValueError("id_type must be either int or str")
 

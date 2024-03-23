@@ -1,4 +1,11 @@
 from typing import Any
+from enum import Enum
+
+
+class IdTypes(Enum):
+    INT = int
+    STR = str
+    UUID = 'uuid'
 
 
 class Entity:
