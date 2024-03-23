@@ -8,9 +8,13 @@ class DataSource:
         if table not in self.tables:
             self.tables.append(table)
 
-    def remove_table(self, table):
-        if table in self.tables:
-            self.tables.remove(table)
+    def drop(self, table_name: str):
+        for table in self.tables:
+            if table.get_name() == table_name:
+                self.tables.remove(table)
+                return True
+
+        return False
 
     def get_table(self, name: str) -> DataTable | None:
         for table in self.tables:
@@ -58,5 +62,12 @@ class DataSource:
         table = self.get_table(table_name)
         if table:
             return table.delete(id)
+        else:
+            return None
+
+    def clear(self, table_name):
+        table = self.get_table(table_name)
+        if table:
+            return table.clear()
         else:
             return None

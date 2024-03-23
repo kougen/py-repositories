@@ -52,3 +52,7 @@ class DataTable:
     def delete(self, id) -> bool:
         print("Override this method in child class")
         return False
+
+    def clear(self) -> bool:
+        print("Override this method in child class")
+        return False
