@@ -1,7 +1,18 @@
 from .datatable import DataTable
 from jsonservice import JsonService
 from .datasource import DataSource
+from .lib import Entity, filter_by_fields
 import os
+
+def convert_to_entity(data: dict) -> Entity:
+    if 'id' not in data:
+        raise ValueError("Entity must have an id")
+
+    entity = Entity(data['id'])
+    for key, value in data.items():
+        if key != 'id':
+            entity.add_field(key, value)
+    return entity
 
 class JsonTable(DataTable):
     def __init__(self, name: str, store_path: str):
@@ -14,7 +25,11 @@ class JsonTable(DataTable):
             self.json_service.write('content', [])
 
     def get_all(self):
-        return self.json_service.read('content') or []
+        content = self.json_service.read('content') or []
+        entities = []
+        for item in content:
+            entities.append(convert_to_entity(item))
+        return entities
 
     def get_by_id(self, id):
         content = self.json_service.read('content') or []
@@ -25,28 +40,24 @@ class JsonTable(DataTable):
 
     def get_by_filter(self, filter: dict):
         content = self.json_service.read('content') or []
-        result = []
+        entities = []
         for item in content:
-            match = True
-            for key, value in filter.items():
-                if item.get(key) != value:
-                    match = False
-                    break
-            if match:
-                result.append(item)
-        return result
+            entities.append(convert_to_entity(item))
+        return filter_by_fields(entities, filter)
 
-    def insert(self, data):
+    def insert(self, data: Entity):
         content = self.json_service.read('content') or []
-        content.append(data)
+        if self.get_by_id(data.id):
+            return False
+        content.append(data.serialize())
         self.json_service.write('content', content)
         return True
 
-    def update(self, id, data):
-        content = self.json_service.read('content') or []
+    def update(self, id, data: Entity):
+        content = self.json_service.read('content') or []  # type: list[dict]
         for index, item in enumerate(content):
             if item['id'] == id:
-                content[index] = data
+                content[index] = data.serialize()
                 self.json_service.write('content', content)
                 return True
         return False
