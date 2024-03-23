@@ -6,7 +6,7 @@ from pathlib import Path
 path_root = Path(__file__).parents[1]
 sys.path.append(os.path.join(path_root, 'src'))
 
-from repositories import DataSource, JsonTable, Entity
+from pyrepositories import DataSource, JsonTable, Entity
 
 
 class User(Entity):
@@ -37,6 +37,8 @@ datasource = DataSource()
 
 table = JsonTable('users', os.path.join(path_root, 'scripts', 'data'))
 datasource.add_table(table)
+
+table = datasource.get_table('users')
 
 user = User(1, 'John Doe', 'test@asd.com')
 user2 = User(2, 'Jane Doe 2', 'test3@asd.com')

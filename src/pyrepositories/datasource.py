@@ -12,7 +12,7 @@ class DataSource:
         if table in self.tables:
             self.tables.remove(table)
 
-    def get_table(self, name) -> DataTable | None:
+    def get_table(self, name: str) -> DataTable | None:
         for table in self.tables:
             if table.get_name() == name:
                 return table
