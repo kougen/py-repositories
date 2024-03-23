@@ -31,7 +31,7 @@ class User(Entity):
     def email(self, email):
         self.fields['email'] = email
 
-datasource = DataSource(id_type=IdTypes.UUID)
+datasource = DataSource()
 
 table = JsonTable('users', os.path.join(path_root, 'scripts', 'data'))
 table.add_filter_field(FilterField("name", str, ""))
@@ -50,3 +50,10 @@ for user in dummy_users:
 
 for user in datasource.get_by_filter('users', {'name': '', 'email': ''}):
     print(user)
+
+fist_user = datasource.get_all('users')[0]
+d_result = datasource.delete('users', fist_user.id)
+print(d_result)
+print("After delete")
+print(datasource.get_all('users'))
+
