@@ -1,4 +1,4 @@
-from .lib import FilterField
+from .lib import Entity, FilterField
 from typing import Any
 
 class DataTable:
@@ -41,11 +41,11 @@ class DataTable:
         print("Override this method in child class")
         return []
 
-    def insert(self, data) -> bool:
+    def insert(self, data: Entity) -> bool:
         print("Override this method in child class")
         return False
 
-    def update(self, id, data) -> bool:
+    def update(self, id, data: Entity) -> bool:
         print("Override this method in child class")
         return False
 
