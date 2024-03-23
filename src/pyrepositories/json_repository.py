@@ -68,3 +68,7 @@ class JsonTable(DataTable):
                 self.json_service.write('content', content)
                 return True
         return False
+
+    def clear(self):
+        self.json_service.write('content', [])
+        return True
