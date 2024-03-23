@@ -90,6 +90,8 @@ class DataSource:
     def update(self, table_name, id: int | str, data: Entity):
         table = self.get_table(table_name)
         if table:
+            if not table.get_by_id(id):
+                return False
             return table.update(id, data)
         else:
             return None

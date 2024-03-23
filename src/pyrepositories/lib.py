@@ -21,7 +21,7 @@ class Entity:
 
     def filter(self, filter: dict) -> bool:
         for key, value in filter.items():
-            if self.get_field(key) != value:
+            if self.get_field(key) != value and (value is not None or value != ""):
                 return False
         return True
 
