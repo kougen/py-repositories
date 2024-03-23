@@ -2,16 +2,14 @@ import os
 import sys
 from pathlib import Path
 
-
 path_root = Path(__file__).parents[1]
 sys.path.append(os.path.join(path_root, 'src'))
 
-from pyrepositories import DataSource, JsonTable, Entity
+from pyrepositories import DataSource, JsonTable, Entity, IdTypes
 
 
 class User(Entity):
-    def __init__(self, id, name, email):
-        super().__init__(id)
+    def __init__(self, name, email):
         self.fields = {
             'name': name,
             'email': email
@@ -33,15 +31,13 @@ class User(Entity):
     def email(self, email):
         self.fields['email'] = email
 
-datasource = DataSource()
+datasource = DataSource(id_type=IdTypes.UUID)
 
 table = JsonTable('users', os.path.join(path_root, 'scripts', 'data'))
 datasource.add_table(table)
-
-table = datasource.get_table('users')
-
-user = User(1, 'John Doe', 'test@asd.com')
-user2 = User(2, 'Jane Doe 2', 'test3@asd.com')
+datasource.clear('users')
+user = User('John Doe', 'test@asd.com')
+user2 = User('Jane Doe 2', 'test3@asd.com')
 
 result = datasource.insert('users', user)
 print(result)
