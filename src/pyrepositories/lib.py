@@ -2,7 +2,7 @@ from typing import Any
 
 
 class Entity:
-    def __init__(self, id):
+    def __init__(self, id: int | str | None = None):
         self.id = id
         self.fields = {}
 
