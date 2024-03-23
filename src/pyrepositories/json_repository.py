@@ -47,8 +47,6 @@ class JsonTable(DataTable):
 
     def insert(self, data: Entity):
         content = self.json_service.read('content') or []
-        if self.get_by_id(data.id):
-            return False
         content.append(data.serialize())
         self.json_service.write('content', content)
         return True
