@@ -38,6 +38,7 @@ class DataTable:
         return None
 
     def get_by_filter(self, filter: dict) -> list:
+        print(f'Filter: {filter}')
         entities = self.get_all()
         return filter_by_fields(entities, filter)
 

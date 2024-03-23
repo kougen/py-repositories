@@ -19,15 +19,17 @@ class Entity:
     def get_field(self, name: str) -> Any:
         return self.fields.get(name)
 
+    def matches_criteria(self, key: str, value: str) -> bool:
+        if isinstance(self.fields[key], str):
+            return value.lower() in self.fields[key].lower()
+        else:
+            return value == self.fields[key]
+
     def has_value(self, filter: dict) -> bool:
         for key, value in filter.items():
-            if value is None or value != "":
-                continue
-            if key not in self.fields:
-                continue
-            if value in self.fields[key]:
-                return True
-        return False
+            if not self.matches_criteria(key, value):
+                return False
+        return True
 
     def serialize(self) -> dict[str, Any]:
         return {
@@ -37,6 +39,9 @@ class Entity:
  
     def __str__(self):
         return str(self.serialize())
+
+    def __repr__(self):
+        return self.__str__()
 
 class FilterField:
     def __init__(self, name, field_type, default=None):

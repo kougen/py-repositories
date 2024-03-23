@@ -5,7 +5,7 @@ from pathlib import Path
 path_root = Path(__file__).parents[1]
 sys.path.append(os.path.join(path_root, 'src'))
 
-from pyrepositories import DataSource, JsonTable, Entity, IdTypes
+from pyrepositories import DataSource, JsonTable, Entity, IdTypes, FilterField
 
 
 class User(Entity):
@@ -34,15 +34,19 @@ class User(Entity):
 datasource = DataSource(id_type=IdTypes.UUID)
 
 table = JsonTable('users', os.path.join(path_root, 'scripts', 'data'))
+table.add_filter_field(FilterField("name", str, ""))
+table.add_filter_field(FilterField("email", str, ""))
 datasource.add_table(table)
 datasource.clear('users')
-user = User('John Doe', 'test@asd.com')
-user2 = User('Jane Doe 2', 'test3@asd.com')
 
-result = datasource.insert('users', user)
-print(result)
-result = datasource.insert('users', user2)
-print(result)
+dummy_users = [
+    User('John Doe', 'test@asd.com'),
+    User('Jane Doe', 'test3@asd.com'),
+    User('Mary Poppins', 'poppinst@industry.com')
+]
 
-for user in datasource.get_all('users') or []:
+for user in dummy_users:
+    datasource.insert('users', user)
+
+for user in datasource.get_by_filter('users', {'name': '', 'email': ''}):
     print(user)

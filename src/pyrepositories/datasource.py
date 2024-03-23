@@ -57,7 +57,7 @@ class DataSource:
         if table:
             return table.get_all()
         else:
-            return None
+            raise ValueError("Table not found")
 
     def get_by_id(self, table_name: str, id: int | str):
         table = self.get_table(table_name)
@@ -71,7 +71,7 @@ class DataSource:
         if table:
             return table.get_by_filter(filter)
         else:
-            return None
+            raise ValueError("Table not found")
 
     def insert(self, table_name: str, data: Entity):
         table = self.get_table(table_name)
