@@ -7,12 +7,29 @@ class IdTypes(Enum):
     STR = str
     UUID = 'uuid'
 
+
 class FieldKeyTypes(Enum):
-    PRIMARY = 'primary'
-    UNIQUE = 'unique'
-    STANDARD = 'standard'
-    REQUIRED = 'required'
-    OPTIONAL = 'optional'
+    PRIMARY = 0
+    UNIQUE = 1
+    REQUIRED = 2
+    STANDARD = 3
+    OPTIONAL = 4
+
+    def __lt__(self, other):
+        return self.value < other.value
+
+    def __gt__(self, other):
+        return self.value > other.value
+
+    def __eq__(self, other):
+        return self.value == other.value
+
+    def __le__(self, other):
+        return self.value <= other.value
+
+    def __ge__(self, other):
+        return self.value >= other.value
+
 
 class FieldTypes(Enum):
     INT = int
@@ -23,19 +40,41 @@ class FieldTypes(Enum):
     LIST = list
     DICT = dict
 
+
 class FieldValue:
     def __init__(self, value: Any, entity_id: IdTypes):
         self.entity_id = entity_id
         self.value = value
 
-class Field:
+
+class FieldBase:
     def __init__(self, name: str, field_type: FieldTypes, key_type: FieldKeyTypes, default: Any = None):
         self.name = name
         self.field_type = field_type
         self.key_type = key_type
         self.default = default
-        if key_type == FieldKeyTypes.OPTIONAL and default is None:
-            raise ValueError(f"Field {name} is optional but has no default value")
+
+    def __str__(self):
+        return f"{self.name} ({self.field_type}, {self.key_type})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def serialize(self) -> dict[str, tuple]:
+        return {
+            self.name : (self.field_type, self.key_type, self.default)
+        }
+
+
+
+class TableField:
+    def __init__(self, field: FieldBase):
+        self.name = field.name
+        self.field_type = field.field_type
+        self.key_type = field.key_type
+        self.default = field.default
+        if self.key_type == FieldKeyTypes.OPTIONAL and self.default is None:
+            raise ValueError(f"Field {self.name} is optional but has no default value")
         self.values = {}  # type: dict[IdTypes, FieldValue]
 
     def set_value(self, entity_id: IdTypes, value: Any = None):
@@ -51,46 +90,83 @@ class Field:
     def get_value(self, entity_id: IdTypes) -> Any | None:
         return self.values.get(entity_id)
 
+    def serialize(self) -> dict[str, tuple]:
+        return {
+            self.name: (self.field_type, self.key_type, self.default)
+        }
+
     def __str__(self):
         return f"{self.name} ({self.field_type}, {self.key_type})"
+
+
+class EntityField:
+    def __init__(self, field: FieldBase, value: Any = None):
+        self.value = value
+        self.name = field.name
+        self.field_type = field.field_type
+        self.key_type = field.key_type
+        self.default = field.default
+
+        if self.key_type == FieldKeyTypes.OPTIONAL and self.default is None:
+            raise ValueError(f"Field {self.name} is optional but has no default value")
+
+        if self.value is None and self.default is not None:
+            self.value = self.default
+
+        if self.key_type < FieldKeyTypes.STANDARD and self.value is None:
+            raise ValueError(f"Field {self.name} is required but has no value")
+
+    def serialize(self) -> dict[str, tuple]:
+        return {
+            self.name: (self.field_type, self.key_type, self.default)
+        }
+
+    def __str__(self):
+        return f"{self.name} ({self.field_type}, {self.key_type})"
+
+
+class Error:
+    def __init__(self, message: str):
+        self.message = message
+
+    def __str__(self):
+        return self.message
 
     def __repr__(self):
         return self.__str__()
 
-    def serialize(self) -> dict[str, tuple]:
-        return {
-            self.name : (self.field_type, self.key_type, self.default)
-        }
-
-class EntityField:
-    def __init__(self, name: str, field_type: FieldTypes, key_type: FieldKeyTypes, value: Any = None, default: Any = None):
-        self.name = name
-        self.field_type = field_type
-        self.key_type = key_type
-        self.default = default
-        self.value = value
-
-    def serialize(self) -> dict[str, tuple]:
-        return {
-            self.name : (self.field_type, self.key_type, self.default)
-        }
 
 class Entity:
-    def __init__(self, id: IdTypes | None = None):
+    def __init__(self, fields: list[EntityField], id: IdTypes | None = None):
         self.id = id
-        self.fields = {}  # type: dict[str, EntityField]
+        self.__fields = {}  # type: dict[str, EntityField]
+        for field in fields:
+            self.__fields[field.name] = field
+        self.errors = []  # type: list[Error]
 
     def add_field(self, name: str, field: EntityField):
-        self.fields[name] = field
+        self.__fields[name] = field
 
     def get_field(self, name: str) -> EntityField | None:
-        return self.fields.get(name)
+        return self.__fields.get(name)
+
+    def get_field_value(self, name: str) -> Any:
+        return self.__fields[name].value
+
+    def set_field_value(self, name: str, value: Any):
+        self.__fields[name].value = value
+
+    def get_fields(self):
+        fields = []
+        for field in self.__fields.values():
+            fields.append(field)
+        return fields
 
     def matches_criteria(self, key: str, value: str) -> bool:
-        if isinstance(self.fields[key], str):
-            return value.lower() in self.fields[key].value.lower()
+        if isinstance(self.__fields[key], str):
+            return value.lower() in self.__fields[key].value.lower()
         else:
-            return value == self.fields[key]
+            return value == self.__fields[key]
 
     def has_value(self, filter: dict) -> bool:
         for key, value in filter.items():
@@ -98,10 +174,21 @@ class Entity:
                 return False
         return True
 
+    def validate(self) -> bool:
+        for field in self.__fields.values():
+            if field.key_type < FieldKeyTypes.STANDARD and field.value is None:
+                self.errors.append(Error(f"Field {field.name} is required"))
+                return False
+        return True
+
+    def print_errors(self):
+        for error in self.errors:
+            print(error)
+
     def serialize(self) -> dict[str, Any]:
         data = {}
         data['id'] = self.id
-        for field in self.fields.values():
+        for field in self.__fields.values():
             data[field.name] = field.value
         return data
  
