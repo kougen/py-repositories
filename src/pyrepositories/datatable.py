@@ -1,10 +1,15 @@
-from .lib import Entity, FilterField, filter_by_fields
+from .lib import Entity, FilterField, filter_by_fields, FieldKeyTypes, Field, IdTypes
 from typing import Any
 
 class DataTable:
-    def __init__(self, name):
+    def __init__(self, name, field_structure: list[Field]):
         self.name = name
         self.filter_fields = [] #type: list[FilterField]
+        self.entities = {} #type: dict[IdTypes, Entity]
+        self.fields = {} #type: dict[str, Field]
+
+        for field in field_structure:
+            self.fields[field.name] = Field(field.name, field.field_type, field.key_type, field.default)
 
     def set_filter_fields(self, fields: dict[str, tuple]):
         for key, value in fields.items():
@@ -42,13 +47,24 @@ class DataTable:
         entities = self.get_all()
         return filter_by_fields(entities, filter)
 
-    def insert(self, data: Entity) -> bool:
-        print("Override this method in child class")
-        return False
+    def insert(self, data: Entity) -> Entity | None:
+        if not data.id:
+            raise ValueError("Entity must have an id")
+        if data.id in self.entities:
+            raise ValueError("Entity already exists")
+        self.entities[data.id] = data
+        for field in data.fields.values():
+            self.fields[field.name].set_value(data.id, field.value)
+        return data
 
-    def update(self, id, data: Entity) -> bool:
-        print("Override this method in child class")
-        return False
+
+    def update(self, id, data: Entity) -> Entity | None:
+        if id not in self.entities:
+            raise ValueError("Entity does not exist")
+        self.entities[id] = data
+        for field in data.fields.values():
+            self.fields[field.name].set_value(id, field.value)
+        return data
 
     def delete(self, id) -> bool:
         print("Override this method in child class")
