@@ -5,7 +5,7 @@ from pathlib import Path
 path_root = Path(__file__).parents[1]
 sys.path.append(os.path.join(path_root, 'src'))
 
-from pyrepositories import DataSource, JsonTable, Entity, IdTypes, FilterField
+from pyrepositories import DataSource, JsonTable, Entity, IdTypes, FilterField, Field, FieldKeyTypes, FieldTypes
 
 
 class User(Entity):
@@ -32,11 +32,17 @@ class User(Entity):
         self.fields['email'] = email
 
 datasource = DataSource()
+fields = [
+    Field('name', FieldTypes.STR, FieldKeyTypes.REQUIRED),
+    Field('email', FieldTypes.STR, FieldKeyTypes.UNIQUE),
+    Field('username', FieldTypes.STR, FieldKeyTypes.UNIQUE)
+]
 
-table = JsonTable('users', os.path.join(path_root, 'scripts', 'data'))
-table.add_filter_field(FilterField("name", str, ""))
-table.add_filter_field(FilterField("email", str, ""))
+table = JsonTable('users', os.path.join(path_root, 'scripts', 'data'), fields, True)
+# table.add_filter_field(FilterField("name", str, ""))
+# table.add_filter_field(FilterField("email", str, ""))
 datasource.add_table(table)
+
 datasource.clear('users')
 
 dummy_users = [
@@ -48,12 +54,12 @@ dummy_users = [
 for user in dummy_users:
     datasource.insert('users', user)
 
-for user in datasource.get_by_filter('users', {'name': '', 'email': ''}):
-    print(user)
+# for user in datasource.get_by_filter('users', {'name': '', 'email': ''}):
+#     print(user)
 
-fist_user = datasource.get_all('users')[0]
-d_result = datasource.delete('users', fist_user.id)
-print(d_result)
-print("After delete")
+# fist_user = datasource.get_all('users')[0]
+# d_result = datasource.delete('users', fist_user.id)
+# print(d_result)
+# print("After delete")
 print(datasource.get_all('users'))
 
