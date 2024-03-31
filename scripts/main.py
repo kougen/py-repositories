@@ -5,40 +5,57 @@ from pathlib import Path
 path_root = Path(__file__).parents[1]
 sys.path.append(os.path.join(path_root, 'src'))
 
-from pyrepositories import DataSource, JsonTable, Entity, IdTypes, FilterField, Field, FieldKeyTypes, FieldTypes
+from pyrepositories import DataSource, JsonTable, Entity, IdTypes, FilterField, FieldBase, FieldTypes, FieldKeyTypes, EntityField
+
+
+fields = [
+    FieldBase('name', FieldTypes.STR, FieldKeyTypes.REQUIRED),
+    FieldBase('email', FieldTypes.STR, FieldKeyTypes.UNIQUE),
+    FieldBase('username', FieldTypes.STR, FieldKeyTypes.UNIQUE),
+    FieldBase('comment', FieldTypes.STR, FieldKeyTypes.OPTIONAL, '')
+]
 
 
 class User(Entity):
-    def __init__(self, name, email):
-        self.fields = {
-            'name': name,
-            'email': email
-        }
+    def __init__(self, name: str, email: str, username: str | None = None):
+        entity_fields = [
+            EntityField(fields[0], name),
+            EntityField(fields[1], email),
+            EntityField(fields[2], username),
+            EntityField(fields[3])
+        ]
+        super().__init__(entity_fields)
+        self.name = name
+        self.email = email
+        self.username = username
 
     @property
     def name(self):
-        return self.fields.get('name')
+        return self.get_field_value('name')
 
     @property
     def email(self):
-        return self.fields.get('email')
+        return self.get_field_value('email')
+
+    @property
+    def username(self):
+        return self.get_field_value('username')
 
     @name.setter
     def name(self, name):
-        self.fields['name'] = name
+        self.set_field_value('name', name)
 
     @email.setter
     def email(self, email):
-        self.fields['email'] = email
+        self.set_field_value('email', email)
+
+    @username.setter
+    def username(self, username):
+        self.set_field_value('username', username)
+
 
 datasource = DataSource()
-fields = [
-    Field('name', FieldTypes.STR, FieldKeyTypes.REQUIRED),
-    Field('email', FieldTypes.STR, FieldKeyTypes.UNIQUE),
-    Field('username', FieldTypes.STR, FieldKeyTypes.UNIQUE)
-]
-
-table = JsonTable('users', os.path.join(path_root, 'scripts', 'data'), fields, True)
+table = JsonTable('users', os.path.join(path_root, 'scripts', 'data'), fields)
 # table.add_filter_field(FilterField("name", str, ""))
 # table.add_filter_field(FilterField("email", str, ""))
 datasource.add_table(table)
@@ -46,9 +63,9 @@ datasource.add_table(table)
 datasource.clear('users')
 
 dummy_users = [
-    User('John Doe', 'test@asd.com'),
-    User('Jane Doe', 'test3@asd.com'),
-    User('Mary Poppins', 'poppinst@industry.com')
+    User('John Doe', 'test@asd.com', 'johndoe'),
+    User('Jane Doe', 'test3@asd.com', 'janedoe'),
+    User('Mary Poppins', 'poppinst@industry.com', 'marypoppins'),
 ]
 
 for user in dummy_users:
