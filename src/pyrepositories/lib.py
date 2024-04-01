@@ -30,6 +30,49 @@ class FieldKeyTypes(Enum):
     def __ge__(self, other):
         return self.value >= other.value
 
+class FilterTypes(Enum):
+    EQUAL = 0
+    NOT_EQUAL = 1
+    GREATER_THAN = 2
+    LESS_THAN = 3
+    GREATER_THAN_OR_EQUAL = 4
+    LESS_THAN_OR_EQUAL = 5
+    IN = 6
+    NOT_IN = 7
+    LIKE = 8
+    NOT_LIKE = 9
+    IS_NULL = 10
+    IS_NOT_NULL = 11
+    CONTAINS = 12
+    NOT_CONTAINS = 13
+
+class FilterCombination(Enum):
+    AND = 0
+    OR = 1
+
+
+class FilterCondition:
+    def __init__(self, key: str, value: Any, filter_type: FilterTypes = FilterTypes.EQUAL):
+        self.key = key
+        self.value = value
+        self.filter_type = filter_type
+
+    def __str__(self):
+        return f"{self.key} {self.filter_type} {self.value}"
+
+    def __repr__(self):
+        return self.__str__()
+
+class Filter:
+    def __init__(self, conditions: list[FilterCondition], combination: FilterCombination = FilterCombination.AND):
+        self.conditions = conditions
+        self.combination = combination
+
+    def __str__(self):
+        return f"{self.combination} {self.conditions}"
+
+    def __repr__(self):
+        return self.__str__()
 
 class FieldTypes(Enum):
     INT = int
@@ -42,7 +85,7 @@ class FieldTypes(Enum):
 
 
 class FieldValue:
-    def __init__(self, value: Any, entity_id: IdTypes):
+    def __init__(self, value: Any, entity_id: int | str):
         self.entity_id = entity_id
         self.value = value
 
@@ -75,9 +118,9 @@ class TableField:
         self.default = field.default
         if self.key_type == FieldKeyTypes.OPTIONAL and self.default is None:
             raise ValueError(f"Field {self.name} is optional but has no default value")
-        self.values = {}  # type: dict[IdTypes, FieldValue]
+        self.values = {}  # type: dict[int | str, FieldValue]
 
-    def set_value(self, entity_id: IdTypes, value: Any = None):
+    def set_value(self, entity_id: int | str, value: Any = None):
         if self.key_type == FieldKeyTypes.REQUIRED and value is None:
             raise ValueError(f"Field {self.name} is required")
 
@@ -87,8 +130,16 @@ class TableField:
 
         self.values[entity_id] = FieldValue(value, entity_id)
 
-    def get_value(self, entity_id: IdTypes) -> Any | None:
+    def get_value(self, entity_id: int | str) -> Any | None:
         return self.values.get(entity_id)
+
+    def get_unique(self, value: Any) -> FieldValue | None:
+        if self.key_type != FieldKeyTypes.UNIQUE:
+            raise ValueError(f"Field {self.name} is not unique")
+        for field_value in self.values.values():
+            if field_value.value == value:
+                return field_value
+        return None
 
     def serialize(self) -> dict[str, tuple]:
         return {
@@ -137,7 +188,7 @@ class Error:
 
 
 class Entity:
-    def __init__(self, fields: list[EntityField], id: IdTypes | None = None):
+    def __init__(self, fields: list[EntityField], id: int | str | None = None):
         self.id = id
         self.__fields = {}  # type: dict[str, EntityField]
         for field in fields:
@@ -162,19 +213,54 @@ class Entity:
             fields.append(field)
         return fields
 
-    def matches_criteria(self, key: str, value: str) -> bool:
+    def matches_condition(self, key: str, value: Any, filter_type: FilterTypes) -> bool:
         field = self.get_field(key)
         if not field:
             return False
-        if field.value != value:
-            return False
-        return True
 
-    def has_value(self, filter: dict) -> bool:
-        for key, value in filter.items():
-            if not self.matches_criteria(key, value):
-                return False
-        return True
+        if value == field.default or value is None or value == '' or value == []:
+            return True
+
+        if filter_type == FilterTypes.EQUAL:
+            return field.value == value
+        if filter_type == FilterTypes.NOT_EQUAL:
+            return field.value != value
+        if filter_type == FilterTypes.GREATER_THAN:
+            return field.value > value
+        if filter_type == FilterTypes.LESS_THAN:
+            return field.value < value
+        if filter_type == FilterTypes.GREATER_THAN_OR_EQUAL:
+            return field.value >= value
+        if filter_type == FilterTypes.LESS_THAN_OR_EQUAL:
+            return field.value <= value
+        if filter_type == FilterTypes.IN and isinstance(value, list):
+            return field.value in value
+        if filter_type == FilterTypes.NOT_IN and isinstance(value, list):
+            return field.value not in value
+        if filter_type == FilterTypes.IS_NULL:
+            return field.value is None
+        if filter_type == FilterTypes.IS_NOT_NULL:
+            return field.value is not None
+        if filter_type == FilterTypes.LIKE or filter_type == FilterTypes.CONTAINS:
+            return value in field.value
+        if filter_type == FilterTypes.NOT_LIKE or filter_type == FilterTypes.NOT_CONTAINS:
+            return value not in field.value
+
+    def matches_criteria(self, filter: Filter) -> bool:
+        results = []
+        for condition in filter.conditions:
+            results.append(self.matches_condition(condition.key, condition.value, condition.filter_type))
+
+        if filter.combination == FilterCombination.AND:
+            return all(results)
+        if filter.combination == FilterCombination.OR:
+            return any(results)
+
+        raise ValueError(f"Invalid filter combination {filter.combination}")
+                
+
+    def has_value(self, filter: Filter) -> bool:
+        return self.matches_criteria(filter)
 
     def validate(self) -> bool:
         for field in self.__fields.values():
@@ -201,7 +287,7 @@ class Entity:
         return self.__str__()
 
 
-def filter_by_fields(data: list[Entity], filter: dict) -> list[Entity]:
+def filter_by_fields(data: list[Entity], filter: Filter) -> list[Entity]:
     result = []
     for item in data:
         if item.has_value(filter):
