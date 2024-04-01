@@ -1,6 +1,5 @@
-from .lib import Entity, filter_by_fields, FieldKeyTypes, FieldBase, TableField, IdTypes
+from .lib import Entity, filter_by_fields, FieldKeyTypes, FieldBase, TableField, IdTypes, Filter, FieldValue
 from typing import Any
-
 
 class DataTable:
     def __init__(self, name, field_structure: list[FieldBase]):
@@ -20,23 +19,25 @@ class DataTable:
         print("Override this method in child class")
         return []
 
-    def get_by_id(self, entity_id) -> Entity | None:
+    def get_by_id(self, entity_id: int | str) -> Entity | None:
         """Get entity by id from the data source while updating the fields"""
 
         print("Override this method in child class")
         return None
 
-    def get_by_filter(self, filter: dict) -> list[Entity]:
-        print(f'Filter: {filter}')
-        entities = self.get_all()
-        return filter_by_fields(entities, filter)
+    def get_unique(self, key: str, value: Any) -> Entity | None:
+        """Get entity by unique key from the data source"""
 
-    def get_unique(self, field_name: str, value: Any) -> Entity | None:
         print("Override this method in child class")
         return None
 
+    def get_by_filter(self, filters: Filter) -> list[Entity]:
+        print(f'Filter: {filters}')
+        entities = self.get_all()
+        return filter_by_fields(entities, filters)
+
     def insert(self, data: Entity) -> Entity | None:
-        self._insert(data, self.get_all())
+        return self._insert(data, self.get_all())
 
     def insert_many(self, data: list[Entity]) -> list[Entity] | None:
         entities = self.get_all()
@@ -46,6 +47,7 @@ class DataTable:
 
     def update(self, entity_id, data: Entity) -> Entity | None:
         print("Override this method in child class")
+        return None
 
     def delete(self, entity_id: IdTypes) -> bool:
         print("Override this method in child class")
@@ -67,3 +69,17 @@ class DataTable:
         for field in data.get_fields():
             self.fields[field.name].set_value(data.id, field.value)
         return data
+
+    def _get_unique(self, field_name: str, value: Any) -> FieldValue | None:
+        for field in [field for field in self.fields.values() if field.key_type == FieldKeyTypes.UNIQUE]:
+            if field.name == field_name:
+               return field.get_unique(value)
+        print(f"No record found with {field_name} = {value}")
+        return None
+
+    def _refresh_fields(self):
+        entities = self.get_all()
+        for entity in entities:
+            for field in entity.get_fields():
+                if entity.id is not None:
+                    self.fields[field.name].set_value(entity.id, field.value)
