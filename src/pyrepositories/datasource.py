@@ -1,5 +1,5 @@
 from .datatable import DataTable
-from .lib import Entity, IdTypes
+from .lib import Entity, IdTypes, Filter
 import random
 import string
 from uuid import uuid4 as get_uuid
@@ -66,12 +66,29 @@ class DataSource:
         else:
             return None
 
-    def get_by_filter(self, table_name: str, filter: dict):
+    def get_by_filter(self, table_name: str, filter: Filter):
         table = self.get_table(table_name)
         if table:
             return table.get_by_filter(filter)
         else:
             raise ValueError("Table not found")
+
+    def get_by_filters(self, table_name: str, filters: list[Filter]):
+        table = self.get_table(table_name)
+        if table:
+            entities = []
+            for filter in filters:
+                entities.extend(table.get_by_filter(filter))
+            return entities
+        else:
+            raise ValueError("Table not found")
+
+    def get_unique(self, table_name: str, field_name: str, value: any):
+        table = self.get_table(table_name)
+        if table:
+            return table.get_unique(field_name, value)
+        else:
+            return None
 
     def insert(self, table_name: str, data: Entity):
         table = self.get_table(table_name)
