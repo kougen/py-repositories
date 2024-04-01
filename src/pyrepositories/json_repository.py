@@ -1,6 +1,7 @@
+from typing import Any
 from .datatable import DataTable
 from jsonservice import JsonService
-from .lib import Entity, IdTypes, EntityField, FieldBase
+from .lib import Entity, IdTypes, EntityField, FieldBase, Filter
 import os
 
 
@@ -31,28 +32,32 @@ class JsonTable(DataTable):
             self.json_service.write('content', [])
             current_content = []
 
-        for content in current_content:
-            entity = convert_to_entity(content, fields)
-            if not entity:
-                print(f"Could not convert entity: {content}")
-                continue
-            for field in entity.get_fields():
-                if entity.id is not None:
-                    self.fields[field.name].set_value(entity.id, field.value)
+        self._refresh_fields()
 
     def get_all(self):
         content = self.json_service.read('content') or []
         entities = []
         for item in content:
             entities.append(convert_to_entity(item, self.field_structure))
+
         return entities
 
-    def get_by_id(self, entity_id: IdTypes) -> Entity | None:
+    def get_by_id(self, entity_id: int | str) -> Entity | None:
         content = self.json_service.read('content') or []
         for item in content:
             if item['id'] == entity_id:
-                return item
+                return convert_to_entity(item, self.field_structure)
         return None
+
+    def get_unique(self, key: str, value: Any) -> Entity | None:
+        field_value = self._get_unique(key, value)
+        if not field_value:
+            return None
+
+        entity = self.get_by_id(field_value.entity_id)
+        if not entity:
+            return None
+        return entity
 
     def insert(self, data: Entity) -> Entity | None:
         result = super().insert(data)
@@ -62,6 +67,15 @@ class JsonTable(DataTable):
         content.append(result.serialize())
         self.json_service.write('content', content)
         return result
+
+    def insert_many(self, data: list[Entity]) -> list[Entity] | None:
+        results = []
+        for entity in data:
+            result = self.insert(entity)
+            if not result:
+                return None
+            results.append(result)
+        return results
 
     def update(self, entity_id, data: Entity) -> Entity | None:
         result = super().update(entity_id, data)
