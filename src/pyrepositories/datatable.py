@@ -1,72 +1,51 @@
-from .lib import Entity, FilterField, filter_by_fields, FieldKeyTypes, FieldBase, TableField, IdTypes
+from .lib import Entity, filter_by_fields, FieldKeyTypes, FieldBase, TableField, IdTypes
 from typing import Any
 
 
 class DataTable:
     def __init__(self, name, field_structure: list[FieldBase]):
         self.name = name
-        self.filter_fields = []  # type: list[FilterField]
         self.field_structure = field_structure
-        self.entities = {}  # type: dict[IdTypes, Entity]
         self.fields = {}  # type: dict[str, TableField]
 
         for field in field_structure:
             self.fields[field.name] = TableField(field)
 
-    def set_filter_fields(self, fields: dict[str, tuple]):
-        for key, value in fields.items():
-            if not isinstance(value, tuple):
-                raise ValueError("Value must be a tuple")
-            default = None
-            if len(value) == 2:
-                default = value[1]
-            if len(value) > 2:
-                raise ValueError("Value must be a tuple of length 2")
-            self.filter_fields.append(FilterField(key, value[0], default))
-
-    def add_filter_field(self, field: FilterField):
-        self.filter_fields.append(field)
-
-    def get_filter_fields(self):
-        formatted = {}
-        for field in self.filter_fields:
-            formatted.update(field.serialize())
-        return formatted
-
     def get_name(self) -> str:
         return self.name
 
-    def get_all(self) -> list:
+    def get_all(self) -> list[Entity]:
+        """Get all entities from the data source while updating the fields"""
+
         print("Override this method in child class")
         return []
 
-    def get_by_id(self, entity_id) -> Any | None:
+    def get_by_id(self, entity_id) -> Entity | None:
+        """Get entity by id from the data source while updating the fields"""
+
         print("Override this method in child class")
         return None
 
-    def get_by_filter(self, filter: dict) -> list:
+    def get_by_filter(self, filter: dict) -> list[Entity]:
         print(f'Filter: {filter}')
         entities = self.get_all()
         return filter_by_fields(entities, filter)
 
+    def get_unique(self, field_name: str, value: Any) -> Entity | None:
+        print("Override this method in child class")
+        return None
+
     def insert(self, data: Entity) -> Entity | None:
-        if not data.id:
-            raise ValueError("Entity must have an id")
-        if data.id in self.entities:
-            raise ValueError("Entity already exists")
-        self.entities[data.id] = data
-        for field in data.get_fields():
-            self.fields[field.name].set_value(data.id, field.value)
+        self._insert(data, self.get_all())
+
+    def insert_many(self, data: list[Entity]) -> list[Entity] | None:
+        entities = self.get_all()
+        for entity in data:
+            self._insert(entity, entities)
         return data
 
     def update(self, entity_id, data: Entity) -> Entity | None:
-        if entity_id not in self.entities:
-            raise ValueError("Entity does not exist")
-        self.entities[entity_id] = data
-
-        for field in data.get_fields():
-            self.fields[field.name].set_value(entity_id, field.value)
-        return data
+        print("Override this method in child class")
 
     def delete(self, entity_id: IdTypes) -> bool:
         print("Override this method in child class")
@@ -75,3 +54,16 @@ class DataTable:
     def clear(self) -> bool:
         print("Override this method in child class")
         return False
+
+    def _insert(self, data: Entity, content: list[Entity]) -> Entity | None:
+        content_dict = {}
+        for item in content:
+            content_dict[item.id] = item
+
+        if not data.id:
+            raise ValueError("Entity must have an id")
+        if data.id in content_dict:
+            raise ValueError("Entity already exists")
+        for field in data.get_fields():
+            self.fields[field.name].set_value(data.id, field.value)
+        return data
