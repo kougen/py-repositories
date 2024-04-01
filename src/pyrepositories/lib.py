@@ -163,10 +163,12 @@ class Entity:
         return fields
 
     def matches_criteria(self, key: str, value: str) -> bool:
-        if isinstance(self.__fields[key], str):
-            return value.lower() in self.__fields[key].value.lower()
-        else:
-            return value == self.__fields[key]
+        field = self.get_field(key)
+        if not field:
+            return False
+        if field.value != value:
+            return False
+        return True
 
     def has_value(self, filter: dict) -> bool:
         for key, value in filter.items():
@@ -197,18 +199,6 @@ class Entity:
 
     def __repr__(self):
         return self.__str__()
-
-
-class FilterField:
-    def __init__(self, name, field_type, default=None):
-        self.name = name
-        self.field_type = field_type
-        self.default = default
-
-    def serialize(self) -> dict[str, tuple]:
-        return {
-            self.name : (self.field_type, self.default)
-        }
 
 
 def filter_by_fields(data: list[Entity], filter: dict) -> list[Entity]:
