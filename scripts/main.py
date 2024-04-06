@@ -88,7 +88,7 @@ print(mary)
 
 print(fields[0].field_type.content_type)
 
-fist_user = datasource.get_all('users')[0]
+first_user = datasource.get_all('users')[0]
 d_result = datasource.delete('users', fist_user.id)
 print(d_result)
 print("After delete")
