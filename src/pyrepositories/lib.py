@@ -75,6 +75,24 @@ class Filter:
         return self.__str__()
 
 class FieldTypes(Enum):
+    @property
+    def content_type(self):
+        if self == FieldTypes.UUID:
+            return str
+        if self == FieldTypes.INT:
+            return int
+        if self == FieldTypes.STR:
+            return str
+        if self == FieldTypes.BOOL:
+            return bool
+        if self == FieldTypes.FLOAT:
+            return float
+        if self == FieldTypes.LIST:
+            return list
+        if self == FieldTypes.DICT:
+            return dict
+        
+
     INT = int
     STR = str
     UUID = 'uuid'
@@ -82,13 +100,6 @@ class FieldTypes(Enum):
     FLOAT = float
     LIST = list
     DICT = dict
-
-
-    @property
-    def content_type(self):
-        if self == FieldTypes.UUID:
-            return str
-        return self.value
 
 class FieldValue:
     def __init__(self, value: Any, entity_id: int | str):
