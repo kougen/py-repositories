@@ -86,9 +86,11 @@ print("Unique")
 mary = datasource.get_unique('users', 'username', 'marypoppins')
 print(mary)
 
-# fist_user = datasource.get_all('users')[0]
-# d_result = datasource.delete('users', fist_user.id)
-# print(d_result)
-# print("After delete")
-# print(datasource.get_all('users'))
+print(fields[0].field_type.content_type)
+
+first_user = datasource.get_all('users')[0]
+d_result = datasource.delete('users', fist_user.id)
+print(d_result)
+print("After delete")
+print(datasource.get_all('users'))
 
