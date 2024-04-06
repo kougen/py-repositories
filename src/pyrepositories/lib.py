@@ -84,6 +84,12 @@ class FieldTypes(Enum):
     DICT = dict
 
 
+    @property
+    def content_type(self):
+        if self == FieldTypes.UUID:
+            return str
+        return self.value
+
 class FieldValue:
     def __init__(self, value: Any, entity_id: int | str):
         self.entity_id = entity_id
