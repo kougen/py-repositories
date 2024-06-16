@@ -30,7 +30,7 @@ class DataSource:
             raise ValueError("Invalid id_type")
 
         self.id_type = id_type
-        self.tables = [] #type: list[DataTable]
+        self.tables = []  # type: list[DataTable]
         self.auto_increment = auto_increment
 
     def add_table(self, table: DataTable):
@@ -59,17 +59,17 @@ class DataSource:
         else:
             raise ValueError("Table not found")
 
-    def get_by_id(self, table_name: str, id: int | str):
+    def get_by_id(self, table_name: str, _id: int | str):
         table = self.get_table(table_name)
         if table:
-            return table.get_by_id(id)
+            return table.get_by_id(_id)
         else:
             return None
 
-    def get_by_filter(self, table_name: str, filter: Filter):
+    def get_by_filter(self, table_name: str, _filter: Filter):
         table = self.get_table(table_name)
         if table:
-            return table.get_by_filter(filter)
+            return table.get_by_filter(_filter)
         else:
             raise ValueError("Table not found")
 
@@ -77,8 +77,8 @@ class DataSource:
         table = self.get_table(table_name)
         if table:
             entities = []
-            for filter in filters:
-                entities.extend(table.get_by_filter(filter))
+            for _filter in filters:
+                entities.extend(table.get_by_filter(_filter))
             return entities
         else:
             raise ValueError("Table not found")
@@ -104,19 +104,19 @@ class DataSource:
                 return False
         return table.insert(data)
 
-    def update(self, table_name, id: int | str, data: Entity):
+    def update(self, table_name, _id: int | str, data: Entity):
         table = self.get_table(table_name)
         if table:
-            if not table.get_by_id(id):
+            if not table.get_by_id(_id):
                 return False
-            return table.update(id, data)
+            return table.update(_id, data)
         else:
             return None
 
-    def delete(self, table_name, id):
+    def delete(self, table_name, _id):
         table = self.get_table(table_name)
         if table:
-            return table.delete(id)
+            return table.delete(_id)
         else:
             return None
 
